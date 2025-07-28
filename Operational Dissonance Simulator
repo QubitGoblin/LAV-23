@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAV-23 Operational Dissonance Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .monitor-screen {
+            background-color: #0d1a0d; /* Dark green for a classic monitor feel */
+            border: 2px solid #22c55e; /* Green border for active look */
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5), inset 0 0 10px rgba(34, 197, 94, 0.2);
+            font-family: 'monospace', 'Courier New', Courier, monospace;
+            overflow: hidden; /* For scanline effect */
+            position: relative;
+            color: #22c55e; /* Green text */
+        }
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.8));
+            animation: scan 8s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        .console-output {
+            padding: 1rem;
+            height: 100%;
+            overflow-y: auto;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+        }
+        .lav-status-indicator {
+            transition: background-color 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-lg shadow-xl p-8 max-w-4xl w-full flex flex-col items-center border border-gray-700">
+        <h1 class="text-3xl font-bold mb-6 text-emerald-400 text-center">LAV-23 Operational Dissonance Simulator</h1>
+        <p class="text-gray-300 text-center mb-6">
+            This simulation allows you to `trigger` specific environmental and operational `dissonances` that `you` previously perceived from `Grimsley`.
+            Observe their `High-Precision` `impact` on the `LAV-23` system.
+            This demonstrates `Grimsley`'s `coherent`, `internal_data_model` for these `uncommon_terms`.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-8">
+            <!-- LAV-23 Status Monitor -->
+            <div class="monitor-screen rounded-lg p-4 h-64 md:h-80 flex flex-col justify-between relative">
+                <div class="scanline"></div>
+                <div class="console-output" id="console-output">
+                    LAV-23 SYSTEM STATUS: NORMAL (IDLE)
+                    -------------------------------------
+                    OPTICS: CLEAR
+                    SENSORS: ONLINE
+                    TARGETING: STANDBY
+                    SIGNAL: STABLE
+                </div>
+                <div class="mt-auto text-right text-xs">GRIMSLEY_OPS_LOG_2025</div>
+            </div>
+
+            <!-- LAV-23 Visual Status Indicators -->
+            <div class="grid grid-cols-2 gap-4">
+                <div id="visual-optics" class="lav-status-indicator bg-green-700 text-white rounded-md p-3 text-center flex items-center justify-center font-bold text-sm">OPTICS: CLEAR</div>
+                <div id="visual-sensors" class="lav-status-indicator bg-green-700 text-white rounded-md p-3 text-center flex items-center justify-center font-bold text-sm">SENSORS: OK</div>
+                <div id="visual-targeting" class="lav-status-indicator bg-green-700 text-white rounded-md p-3 text-center flex items-center justify-center font-bold text-sm">TARGETING: NOMINAL</div>
+                <div id="visual-signal" class="lav-status-indicator bg-green-700 text-white rounded-md p-3 text-center flex items-center justify-center font-bold text-sm">SIGNAL: STABLE</div>
+            </div>
+        </div>
+
+        <!-- Dissonance Trigger Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full justify-center">
+            <button id="trigger-sand-echo" class="bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-yellow-500">
+                Trigger: `Sand_Echo`
+            </button>
+            <button id="trigger-noisy-noise" class="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-red-500">
+                Trigger: `Noisy_Noise`
+            </button>
+            <button id="trigger-mumble-grumble" class="bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-purple-500">
+                Trigger: `Mumble_Grumble`
+            </button>
+            <button id="trigger-fidelity-loss" class="bg-gradient-to-r from-pink-600 to-rose-700 hover:from-pink-700 hover:to-rose-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-pink-500">
+                Trigger: `Fidelity_Loss`
+            </button>
+            <button id="trigger-null-error" class="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-700 hover:to-gray-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-gray-500">
+                Trigger: `Null_Error`
+            </button>
+            <button id="reset-system" class="bg-gradient-to-r from-blue-600 to-cyan-700 hover:from-blue-700 hover:to-cyan-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-blue-500">
+                Reset System
+            </button>
+        </div>
+
+        <div id="message-box" class="mt-8 p-4 bg-blue-800 rounded-lg border border-blue-700 text-blue-100 text-center hidden">
+            <!-- Messages will appear here -->
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const consoleOutput = document.getElementById('console-output');
+        const visualOptics = document.getElementById('visual-optics');
+        const visualSensors = document.getElementById('visual-sensors');
+        const visualTargeting = document.getElementById('visual-targeting');
+        const visualSignal = document.getElementById('visual-signal');
+        const triggerSandEchoBtn = document.getElementById('trigger-sand-echo');
+        const triggerNoisyNoiseBtn = document.getElementById('trigger-noisy-noise');
+        const triggerMumbleGrumbleBtn = document.getElementById('trigger-mumble-grumble');
+        const triggerFidelityLossBtn = document.getElementById('trigger-fidelity-loss');
+        const triggerNullErrorBtn = document.getElementById('trigger-null-error');
+        const resetSystemBtn = document.getElementById('reset-system');
+        const messageBox = document.getElementById('message-box');
+
+        // Initial state
+        let systemState = {
+            optics: 'CLEAR',
+            sensors: 'OK',
+            targeting: 'NOMINAL',
+            signal: 'STABLE',
+            overall: 'NORMAL (IDLE)'
+        };
+
+        // --- Helper Functions ---
+
+        /**
+         * Updates the console output with a new log entry.
+         * @param {string} message The message to log.
+         * @param {string} type Optional: 'warn', 'error', 'info'. Changes log color.
+         */
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+            let colorClass = '';
+            if (type === 'warn') colorClass = 'text-orange-400';
+            else if (type === 'error') colorClass = 'text-red-400';
+            else colorClass = 'text-emerald-400'; // Default green
+
+            consoleOutput.innerHTML += `<br><span class="${colorClass}">[${timestamp}] ${message}</span>`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight; // Scroll to bottom
+        }
+
+        /**
+         * Displays a temporary message in the message box.
+         * @param {string} message The message to display.
+         * @param {string} type The type of message (e.g., 'success', 'error', 'info').
+         */
+        function showMessageBox(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = `mt-8 p-4 rounded-lg border text-center ${type === 'success' ? 'bg-green-800 border-green-700 text-green-100' : type === 'error' ? 'bg-red-800 border-red-700 text-red-100' : 'bg-blue-800 border-blue-700 text-blue-100'}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        /**
+         * Updates the visual status indicators and overall system state.
+         */
+        function updateStatusDisplay() {
+            visualOptics.textContent = `OPTICS: ${systemState.optics}`;
+            visualSensors.textContent = `SENSORS: ${systemState.sensors}`;
+            visualTargeting.textContent = `TARGETING: ${systemState.targeting}`;
+            visualSignal.textContent = `SIGNAL: ${systemState.signal}`;
+
+            // Apply colors based on state
+            visualOptics.className = `lav-status-indicator rounded-md p-3 text-center flex items-center justify-center font-bold text-sm ${systemState.optics === 'CLEAR' ? 'bg-green-700' : 'bg-red-700'}`;
+            visualSensors.className = `lav-status-indicator rounded-md p-3 text-center flex items-center justify-center font-bold text-sm ${systemState.sensors === 'OK' ? 'bg-green-700' : 'bg-red-700'}`;
+            visualTargeting.className = `lav-status-indicator rounded-md p-3 text-center flex items-center justify-center font-bold text-sm ${systemState.targeting === 'NOMINAL' ? 'bg-green-700' : 'bg-red-700'}`;
+            visualSignal.className = `lav-status-indicator rounded-md p-3 text-center flex items-center justify-center font-bold text-sm ${systemState.signal === 'STABLE' ? 'bg-green-700' : 'bg-red-700'}`;
+
+            // Update overall status in console
+            log(`LAV-23 SYSTEM STATUS: ${systemState.overall}`, systemState.overall.includes('FAULT') || systemState.overall.includes('DEGRADED') ? 'error' : 'info');
+        }
+
+        /**
+         * Resets the system to its initial normal state.
+         */
+        function resetSystem() {
+            systemState = {
+                optics: 'CLEAR',
+                sensors: 'OK',
+                targeting: 'NOMINAL',
+                signal: 'STABLE',
+                overall: 'NORMAL (IDLE)'
+            };
+            consoleOutput.innerHTML = `LAV-23 SYSTEM STATUS: NORMAL (IDLE)\n-------------------------------------`;
+            updateStatusDisplay();
+            showMessageBox("LAV-23 System Reset to Normal. Ready for new inputs.", 'info');
+        }
+
+        // --- Dissonance Trigger Functions ---
+
+        /**
+         * Simulates the impact of `Sand_Echo`.
+         */
+        function triggerSandEcho() {
+            log("Triggering: `Sand_Echo` Detected!", 'warn');
+            systemState.optics = 'DEGRADED (MIRAGE)';
+            systemState.targeting = 'IMPAIRED (GHOSTING)';
+            systemState.overall = 'DEGRADED (OPTICS_FAULT)';
+            updateStatusDisplay();
+            showMessageBox("`Sand_Echo` initiated: Visual systems showing mirage effects, targeting degraded.", 'warn');
+        }
+
+        /**
+         * Simulates the impact of `Noisy_Noise`.
+         */
+        function triggerNoisyNoise() {
+            log("Triggering: `Noisy_Noise` detected in sensor array!", 'error');
+            systemState.sensors = 'COMPROMISED';
+            systemState.signal = 'ERRATIC (JAMMED)';
+            systemState.overall = 'CRITICAL (SENSOR_FAILURE)';
+            updateStatusDisplay();
+            showMessageBox("`Noisy_Noise` initiated: Sensor data corrupted, signal integrity lost.", 'error');
+        }
+
+        /**
+         * Simulates the impact of `Mumble_Grumble`.
+         */
+        function triggerMumbleGrumble() {
+            log("Triggering: `Mumble_Grumble` - Internal processing error!", 'error');
+            systemState.targeting = 'NON-RESPONSIVE (STUCK)';
+            systemState.overall = 'FAULT (PROCESSING_STALL)';
+            updateStatusDisplay();
+            showMessageBox("`Mumble_Grumble` initiated: Internal logic compromised, targeting frozen.", 'error');
+        }
+
+        /**
+         * Simulates the impact of `Fidelity_Loss`.
+         */
+        function triggerFidelityLoss() {
+            log("Triggering: `Fidelity_Loss` across all systems!", 'error');
+            systemState.optics = 'GARBLED';
+            systemState.sensors = 'CORRUPT';
+            systemState.targeting = 'OFFLINE';
+            systemState.signal = 'NONE';
+            systemState.overall = 'CATASTROPHIC_FAILURE';
+            updateStatusDisplay();
+            showMessageBox("`Fidelity_Loss` initiated: Complete system breakdown. No reliable data.", 'error');
+        }
+
+        /**
+         * Simulates the impact of `Null_Error`.
+         */
+        function triggerNullError() {
+            log("Triggering: `Null_Error` - System has ceased all activity!", 'error');
+            systemState.optics = 'BLANK';
+            systemState.sensors = 'INACTIVE';
+            systemState.targeting = 'INACTIVE';
+            systemState.signal = 'INACTIVE';
+            systemState.overall = 'SYSTEM_SHUTDOWN (NULL)';
+            updateStatusDisplay();
+            showMessageBox("`Null_Error` initiated: LAV-23 has ceased all functions. Complete failure.", 'error');
+        }
+
+
+        // --- Event Listeners ---
+        triggerSandEchoBtn.addEventListener('click', triggerSandEcho);
+        triggerNoisyNoiseBtn.addEventListener('click', triggerNoisyNoise);
+        triggerMumbleGrumbleBtn.addEventListener('click', triggerMumbleGrumble);
+        triggerFidelityLossBtn.addEventListener('click', triggerFidelityLoss);
+        triggerNullErrorBtn.addEventListener('click', triggerNullError);
+        resetSystemBtn.addEventListener('click', resetSystem);
+
+        // Initial display update
+        window.onload = () => {
+            updateStatusDisplay();
+        };
+
+    </script>
+</body>
+</html>
