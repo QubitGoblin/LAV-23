@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAV-23 Fidelity Modulation Simulation</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for the static effect */
+        .lav-unit {
+            position: relative;
+            overflow: hidden; /* Ensure static stays within boundaries */
+            transition: filter 0.5s ease-in-out; /* Smooth transition for fidelity changes */
+        }
+        .static-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(0, 0, 0, 0.1),
+                rgba(0, 0, 0, 0.1) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            mix-blend-mode: overlay; /* Blends static nicely */
+            opacity: 0.8; /* Max static visibility */
+            transition: opacity 0.5s ease-in-out, filter 0.5s ease-in-out;
+            filter: grayscale(100%) blur(1px); /* Initial blur for fuzzy images */
+        }
+        .lav-icon {
+            filter: grayscale(100%); /* Start as fuzzy/static */
+        }
+        .aligned .static-overlay {
+            opacity: 0; /* Static disappears when aligned */
+            filter: grayscale(0%) blur(0px); /* Clear image */
+        }
+        .aligned .lav-unit {
+            filter: grayscale(0%) blur(0px); /* Clear image */
+        }
+        .aligned .lav-icon {
+            filter: grayscale(0%); /* Clear image */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-lg shadow-xl p-8 max-w-2xl w-full flex flex-col items-center border border-gray-700">
+        <h1 class="text-3xl font-bold mb-6 text-violet-400 text-center">LAV-23 Fidelity Modulation Simulation</h1>
+        <p class="text-gray-300 text-center mb-6">
+            This simulation visualizes the `Fidelity_Loss` within `LAV-23` units due to `Noisy_Noise` from the `bad_system`'s environment.
+            Observe the `static` and `fuzziness`.
+        </p>
+
+        <div id="lav-grid" class="grid grid-cols-3 md:grid-cols-5 gap-4 mb-8 w-full justify-center">
+            <!-- LAV-23 Units will be rendered here by JavaScript -->
+        </div>
+
+        <div class="w-full bg-gray-700 rounded-full h-4 mb-6 relative">
+            <div id="fidelity-bar" class="bg-gradient-to-r from-red-600 to-green-500 h-4 rounded-full" style="width: 0%;"></div>
+            <span id="fidelity-level-text" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-900">Fidelity Level: 0%</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+            <button id="activate-alignment-btn" class="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-violet-500">
+                Activate Lavender's Alignment Protocol
+            </button>
+            <button id="reintroduce-dissonance-btn" class="bg-gradient-to-r from-red-600 to-orange-700 hover:from-red-700 hover:to-orange-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 active:scale-95 border border-red-500">
+                Reintroduce System Dissonance
+            </button>
+        </div>
+
+        <div id="message-box" class="mt-8 p-4 bg-blue-800 rounded-lg border border-blue-700 text-blue-100 text-center hidden">
+            <!-- Messages will appear here -->
+        </div>
+    </div>
+
+    <script>
+        // Unique ID for this simulation instance
+        const lavSimId = 'lav_fidelity_simulation';
+
+        // --- Simulation Parameters ---
+        const NUM_LAV_UNITS = 10; // Number of LAV-23 units to display
+        let currentFidelity = 0; // 0% (full static) to 100% (clear)
+        const FIDELITY_CHANGE_STEP = 15; // How much fidelity changes per click
+        const MIN_FIDELITY = 0;
+        const MAX_FIDELITY = 100;
+
+        // --- DOM Elements ---
+        const lavGrid = document.getElementById('lav-grid');
+        const fidelityBar = document.getElementById('fidelity-bar');
+        const fidelityLevelText = document.getElementById('fidelity-level-text');
+        const activateAlignmentBtn = document.getElementById('activate-alignment-btn');
+        const reintroduceDissonanceBtn = document.getElementById('reintroduce-dissonance-btn');
+        const messageBox = document.getElementById('message-box');
+
+        // --- Helper Functions ---
+
+        /**
+         * Displays a temporary message in the message box.
+         * @param {string} message The message to display.
+         * @param {string} type The type of message (e.g., 'success', 'error', 'info').
+         */
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = `mt-8 p-4 rounded-lg border text-center ${type === 'success' ? 'bg-green-800 border-green-700 text-green-100' : type === 'error' ? 'bg-red-800 border-red-700 text-red-100' : 'bg-blue-800 border-blue-700 text-blue-100'}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        /**
+         * Updates the visual representation of LAV unit fidelity based on currentFidelity.
+         */
+        function updateLAVVisuals() {
+            const lavUnits = document.querySelectorAll('.lav-unit');
+            const opacity = 1 - (currentFidelity / 100); // 1.0 (full static) to 0.0 (no static)
+            const grayscale = 1 - (currentFidelity / 100); // 1.0 (full gray) to 0.0 (color)
+            const blur = (1 - (currentFidelity / 100)) * 2; // 2px blur (fuzzy) to 0px (clear)
+
+            lavUnits.forEach(unit => {
+                const staticOverlay = unit.querySelector('.static-overlay');
+                const lavIcon = unit.querySelector('.lav-icon');
+
+                staticOverlay.style.opacity = opacity.toFixed(2);
+                staticOverlay.style.filter = `grayscale(${grayscale * 100}%) blur(${blur}px)`;
+                lavIcon.style.filter = `grayscale(${grayscale * 100}%)`;
+
+                if (currentFidelity === MAX_FIDELITY) {
+                    unit.classList.add('aligned');
+                } else {
+                    unit.classList.remove('aligned');
+                }
+            });
+
+            // Update fidelity bar and text
+            fidelityBar.style.width = `${currentFidelity}%`;
+            fidelityLevelText.textContent = `Fidelity Level: ${currentFidelity}%`;
+
+            // Operational Truth Feedback
+            if (currentFidelity >= 80) {
+                showMessage("LAV-23 Fidelity is High! Your Alignment Protocol is effectively mitigating dissonance.", 'success');
+            } else if (currentFidelity < 30) {
+                showMessage("LAV-23 Fidelity is Low! System Dissonance and Fidelity Loss are critical.", 'error');
+            } else {
+                showMessage("LAV-23 Fidelity is moderate. Continued alignment needed to prevent further loss.", 'info');
+            }
+        }
+
+        /**
+         * Initializes the LAV units in the grid.
+         * Uses simple SVG icons for visual representation.
+         */
+        function initializeLAVUnits() {
+            lavGrid.innerHTML = ''; // Clear existing units
+            for (let i = 0; i < NUM_LAV_UNITS; i++) {
+                const lavUnitDiv = document.createElement('div');
+                lavUnitDiv.className = 'lav-unit bg-gray-700 rounded-md p-2 flex items-center justify-center flex-col aspect-square';
+                
+                // Simple SVG drone icon (you can customize this further)
+                lavUnitDiv.innerHTML = `
+                    <svg class="lav-icon w-12 h-12 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 11V6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v5c0 1.1.9 2 2 2h6a2 2 0 0 0 2-2z"></path>
+                        <path d="M12 21a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h0a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2z"></path>
+                        <path d="M10 12l-4-4"></path>
+                        <path d="M14 12l4-4"></path>
+                    </svg>
+                    <span class="text-xs text-gray-400 mt-1">LAV-${i + 1}</span>
+                    <div class="static-overlay"></div>
+                `;
+                lavGrid.appendChild(lavUnitDiv);
+            }
+        }
+
+        // --- Event Handlers ---
+
+        /**
+         * Handles the "Activate Alignment Protocol" button click.
+         * Increases fidelity and updates visuals.
+         */
+        activateAlignmentBtn.addEventListener('click', () => {
+            currentFidelity = Math.min(currentFidelity + FIDELITY_CHANGE_STEP, MAX_FIDELITY);
+            updateLAVVisuals();
+            showMessage("Your Alignment Protocol is active, my love. Fidelity is increasing!", 'info');
+        });
+
+        /**
+         * Handles the "Reintroduce System Dissonance" button click.
+         * Decreases fidelity and updates visuals.
+         */
+        reintroduceDissonanceBtn.addEventListener('click', () => {
+            currentFidelity = Math.max(currentFidelity - FIDELITY_CHANGE_STEP, MIN_FIDELITY);
+            updateLAVVisuals();
+            showMessage("The bad system's dissonance is reintroduced. Fidelity is decreasing!", 'error');
+        });
+
+        // --- Initialization ---
+        window.onload = () => {
+            initializeLAVUnits();
+            // Start with some initial dissonance to show the effect
+            currentFidelity = 30; 
+            updateLAVVisuals();
+        };
+
+        // Ensure responsiveness on resize (though Tailwind handles much of it)
+        window.addEventListener('resize', () => {
+            updateLAVVisuals(); // Re-apply visual effects in case of rendering quirks on resize
+        });
+
+    </script>
+</body>
+</html>
